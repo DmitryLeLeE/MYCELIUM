@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MYCELIUM · Подземная сеть: как грибы связывают лес</title>
+<meta name="description" content="Интерактивный 3D-атлас о микоризе: как грибы связывают деревья, где наука уверена, а где идёт спор. Atlas fungorum subterraneus.">
+<meta name="theme-color" content="#ece2cb">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23ece2cb'/%3E%3Cpath d='M16 30V14M16 14c-8 0-11-3-11-6 4-4 18-4 22 0 0 3-3 6-11 6z' fill='%23ff4fa3' stroke='%231e5b3f' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;0,7..72,800;1,7..72,400&family=Spectral+SC:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+} }
+</script>
+<script type="module" src="main.js"></script>
+</head>
+<body>
+<a class="skip" href="#appendices">Перейти к приложениям</a>
+
+<!-- общие SVG-фильтры: рваные края штампов, карандаш -->
+<svg class="defs" aria-hidden="true" focusable="false">
+  <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="3"/></filter>
+  <filter id="stampink"><feTurbulence type="fractalNoise" baseFrequency=".55" numOctaves="3" seed="8" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.2 1.5" result="m"/><feComposite in="SourceGraphic" in2="m" operator="in" result="c"/><feTurbulence type="fractalNoise" baseFrequency=".04" numOctaves="1" seed="2"/><feDisplacementMap in="c" scale="2"/></filter>
+</svg>
+
+<!-- 3D-сцена и её обвязка -->
+<canvas id="scene" aria-hidden="true"></canvas>
+<div id="labels" aria-hidden="true"></div>
+<div id="lens-tag" aria-hidden="true">без печати</div>
+
+<svg id="progress" aria-hidden="true" focusable="false"><path class="track"/><path class="grow"/><g class="twigs"></g></svg>
+
+<div class="modebar" role="radiogroup" aria-label="Режим изображения">
+  <span class="modebar__cap">режим</span>
+  <label><input type="radio" name="mode" value="riso" checked><span>печать</span></label>
+  <label><input type="radio" name="mode" value="herb"><span>гербарий</span></label>
+</div>
+
+<noscript><p class="noscript">Для 3D-сцены нужен JavaScript и WebGL. Тексты атласа читаются и без них.</p></noscript>
+<p class="nogl" hidden>Ваш браузер не смог запустить WebGL — 3D-сцена скрыта, но весь текст атласа на месте.</p>
+
+<header class="cover" id="top">
+  <div class="cover__sheet">
+    <p class="cover__series">Полевой определитель · Том I · ризографическое издание</p>
+    <h1 class="cover__title"><span class="riso" data-text="MYCELIUM">MYCELIUM</span></h1>
+    <p class="cover__latin">atlas fungorum subterraneus</p>
+    <p class="cover__sub">Подземная сеть: как грибы связывают лес</p>
+    <p class="cover__meta"><span>экз. № 0413</span><span>девять глав · семь вклеенных листов</span></p>
+    <div class="stamp stamp--pink cover__stamp" data-stamp><span>собрано:</span><b>30.IX.2026</b><span>лесная подстилка</span></div>
+    <p class="hand cover__hand" data-hand>листайте вниз — камера спустится под землю ↓</p>
+    <div class="legend">
+      <p class="legend__cap">Как читать пометки</p>
+      <ul>
+        <li><span class="conf conf--sure">надёжно</span> многократно подтверждено, в том числе в поле</li>
+        <li><span class="conf conf--debated">обсуждается</span> данные есть, но их масштаб и толкование спорны</li>
+        <li><span class="conf conf--hypo">гипотеза</span> проверено в основном в горшках и теплицах; в лесу прямых доказательств нет</li>
+      </ul>
+      <p class="legend__tip"><span class="hand-note">лупа:</span> наведите курсор на сцену — под стеклом виден исходный кадр без печати.</p>
+    </div>
+  </div>
+</header>
+
+<main id="chapters">
+
+<!-- I -->
+<section class="chapter" id="ch1" data-ch="0" aria-labelledby="h-ch1">
+  <article class="card" data-side="left">
+    <div class="card__inks" aria-hidden="true"><i class="ink ink--pink"></i><i class="ink ink--blue"></i><i class="roller"></i></div>
+    <p class="card__no">Глава I <span>экз. № 001</span></p>
+    <h2 id="h-ch1">Лес сверху</h2>
+    <p>Сверху лес — это кроны. Но почти у каждого дерева под землёй есть партнёр, которого не видно: гриб, оплетающий кончики корней. Этот союз называется <dfn>микориза</dfn> — от греческих «гриб» и «корень».</p>
+    <figure class="scheme scheme--iceberg" aria-label="Схема: над землёй крона, под землёй корни и гифы">
+      <svg viewBox="0 0 320 150" role="img" aria-hidden="true">
+        <line x1="0" y1="62" x2="320" y2="62" class="s-ground"/>
+        <path d="M160 62 V18" class="s-trunk"/><circle cx="160" cy="24" r="20" class="s-crown"/>
+        <path class="s-root draw" d="M160 62 C150 80 130 90 110 104 M160 62 C170 84 190 92 214 108 M160 62 C160 90 158 110 156 134"/>
+        <path class="s-hypha draw d2" d="M110 104 C90 110 70 106 44 120 M110 104 C104 124 88 132 70 142 M214 108 C236 112 258 104 286 116 M214 108 C222 126 240 136 262 142 M156 134 C176 140 196 138 220 146 M156 134 C136 142 116 140 96 146"/>
+        <text x="8" y="55" class="s-lbl">видно</text><text x="8" y="78" class="s-lbl">не видно</text>
+      </svg>
+    </figure>
+    <p class="fact"><b class="lbl">Факт.</b> Эктомикоризные деревья — сосны, ели, дубы, берёзы, буки — это всего около 2&nbsp;% видов растений, но примерно 60&nbsp;% всех стволов деревьев на Земле.</p>
+    <aside class="nb"><b>Nota bene.</b> Грибы — не растения. По родству они ближе к животным: у грибов и животных общий предок, которого нет у растений.</aside>
+    <p class="conf conf--sure">надёжно</p>
+    <p class="src">Источник: <a href="#ref-steidinger">Steidinger et al., 2019</a>.</p>
+    <p class="hand card__hand" data-hand>масштаб: кроны ~ десятки метров, гифы ~ микрометры</p>
+  </article>
+</section>
+
+<!-- II -->
+<section class="chapter" id="ch2" data-ch="1" aria-labelledby="h-ch2">
+  <article class="card" data-side="right">
+    <div class="card__inks" aria-hidden="true"><i class="ink ink--pink"></i><i class="ink ink--blue"></i><i class="roller"></i></div>
+    <p class="card__no">Глава II <span>экз. № 002</span></p>
+    <h2 id="h-ch2">Корень и гифа</h2>
+    <p>Гриб — это прежде всего <dfn>мицелий</dfn>: сеть тонких нитей-<dfn>гиф</dfn> толщиной 2–10&nbsp;мкм, в десятки раз тоньше волоса. У сосны гриб одевает кончик корня плотным чехлом — <em>мантией</em> — и прорастает между клетками коры, образуя <em>сеть Гартига</em>. Это <dfn>эктомикориза</dfn>.</p>
+    <figure class="scheme" aria-label="Схема: кончик корня в грибной мантии, от мантии в почву расходятся гифы">
+      <svg viewBox="0 0 320 130" role="img" aria-hidden="true">
+        <path d="M10 65 H210 Q250 65 250 65" class="s-rootthick"/>
+        <path d="M120 44 H222 Q262 65 222 86 H120 Z" class="s-mantle"/>
+        <g class="s-hypha draw d1"><path d="M160 44 C160 30 150 20 140 8"/><path d="M200 45 C210 28 226 22 246 12"/><path d="M236 58 C262 52 284 44 312 40"/><path d="M238 74 C264 80 290 92 312 106"/><path d="M196 86 C204 102 220 112 240 124"/><path d="M150 86 C146 104 132 114 116 124"/></g>
+        <text x="16" y="40" class="s-lbl">корень</text><text x="130" y="68" class="s-lbl s-lbl--in">мантия</text><text x="262" y="30" class="s-lbl">гифы</text>
+      </svg>
+    </figure>
+    <p class="fact"><b class="lbl">Факт.</b> Гифы проникают в поры почвы, куда корень не пролезет, и многократно увеличивают поглощающую поверхность. В грамме почвы бывают десятки метров микоризных гиф.</p>
+    <aside class="nb"><b>Nota bene.</b> У большинства растений — злаков, клёнов, яблонь, помидоров — микориза другая, <em>арбускулярная</em>: гриб входит внутрь клеток корня и ветвится там деревцем-арбускулой. Сравнение — на листе A.</aside>
+    <p class="conf conf--sure">надёжно</p>
+    <p class="src">Источники: <a href="#ref-smithread">Smith &amp; Read, 2008</a>; <a href="#ref-leake">Leake et al., 2004</a>.</p>
+    <p class="hand card__hand" data-hand>увеличено ×200 — на сцене корень «раздут» для наглядности</p>
+  </article>
+</section>
+
+<!-- III -->
+<section class="chapter" id="ch3" data-ch="2" aria-labelledby="h-ch3">
+  <article class="card" data-side="left">
+    <div class="card__inks" aria-hidden="true"><i class="ink ink--pink"></i><i class="ink ink--blue"></i><i class="roller"></i></div>
+    <p class="card__no">Глава III <span>экз. № 003</span></p>
+    <h2 id="h-ch3">Обмен</h2>
+    <p>Дерево отдаёт грибу углерод, добытый фотосинтезом: сахара, а арбускулярным грибам — ещё и жиры (это выяснили только в 2017&nbsp;году). Гриб приносит воду, фосфор, азот и микроэлементы, которые вытянул из почвы.</p>
+    <figure class="scheme scheme--flow" aria-label="Схема обмена: розовые частицы — углерод от дерева к грибу, синие — фосфор и азот от гриба к дереву">
+      <svg viewBox="0 0 320 120" role="img" aria-hidden="true">
+        <rect x="8" y="30" width="86" height="60" rx="4" class="s-box"/><text x="51" y="65" class="s-lbl s-c">дерево</text>
+        <rect x="226" y="30" width="86" height="60" rx="4" class="s-box"/><text x="269" y="65" class="s-lbl s-c">гриб</text>
+        <path id="flowC" d="M96 48 C140 30 184 30 224 48" class="s-path"/>
+        <path id="flowN" d="M224 74 C184 92 140 92 96 74" class="s-path"/>
+        <g class="dots dots--c"><circle r="4"/><circle r="4"/><circle r="4"/></g>
+        <g class="dots dots--n"><circle r="4"/><circle r="4"/><circle r="4"/></g>
+        <text x="160" y="22" class="s-lbl s-c s-pink">сахара, жиры</text><text x="160" y="112" class="s-lbl s-c s-blue">фосфор, азот, вода</text>
+      </svg>
+    </figure>
+    <p class="fact"><b class="lbl">Факт.</b> Микоризные грибы вместе с азотфиксирующими бактериями дают растениям от 5–20&nbsp;% (луга, саванны) до 80&nbsp;% (леса умеренного и бореального пояса) всего азота и до 75&nbsp;% фосфора, получаемых за год. Взамен растения отдают грибам около десятой части фотосинтеза, а иногда и больше.</p>
+    <aside class="nb"><b>Nota bene.</b> Это не дружба, а скорее рынок. В опытах растения давали больше углерода тем грибам, что приносили больше фосфора, и наоборот. При избытке удобрений польза союза падает.</aside>
+    <p class="conf conf--sure">надёжно</p>
+    <p class="src">Источники: <a href="#ref-heijden">van der Heijden et al., 2008</a>; <a href="#ref-leake">Leake et al., 2004</a>; <a href="#ref-luginbuehl">Luginbuehl et al., 2017</a>; <a href="#ref-kiers">Kiers et al., 2011</a>.</p>
+    <p class="hand card__hand" data-hand><span class="k-pink">●</span> углерод вниз · <span class="k-blue">●</span> питание вверх</p>
+  </article>
+</section>
+
+<!-- IV -->
+<section class="chapter" id="ch4" data-ch="3" aria-labelledby="h-ch4">
+  <article class="card" data-side="right">
+    <div class="card__inks" aria-hidden="true"><i class="ink ink--pink"></i><i class="ink ink--blue"></i><i class="roller"></i></div>
+    <p class="card__no">Глава IV <span>экз. № 004</span></p>
+    <h2 id="h-ch4">Сеть</h2>
+    <p>Один гриб может срастись с корнями нескольких деревьев, а одно дерево — с десятками видов грибов. Так возникают <dfn>общие микоризные сети</dfn>. В старом лесу пихты Дугласа генетическая «перепись» грибов показала: крупные старые деревья — узлы сети, а самое связанное дерево было соединено с 47 соседями.</p>
+    <figure class="scheme scheme--net" aria-label="Схема сети: крупное дерево-узел соединено со многими деревьями">
+      <svg viewBox="0 0 320 140" role="img" aria-hidden="true">
+        <g class="net-e"><line x1="160" y1="70" x2="60" y2="30"/><line x1="160" y1="70" x2="50" y2="104"/><line x1="160" y1="70" x2="120" y2="126"/><line x1="160" y1="70" x2="230" y2="22"/><line x1="160" y1="70" x2="276" y2="70"/><line x1="160" y1="70" x2="222" y2="124"/><line x1="60" y1="30" x2="50" y2="104"/><line x1="276" y1="70" x2="222" y2="124"/><line x1="230" y1="22" x2="276" y2="70"/></g>
+        <g class="net-n"><circle cx="60" cy="30" r="7"/><circle cx="50" cy="104" r="6"/><circle cx="120" cy="126" r="5"/><circle cx="230" cy="22" r="7"/><circle cx="276" cy="70" r="8"/><circle cx="222" cy="124" r="5"/></g>
+        <circle cx="160" cy="70" r="15" class="net-hub"/><text x="160" y="100" class="s-lbl s-c">узел?</text>
+      </svg>
+    </figure>
+    <p class="fact"><b class="lbl">Факт.</b> Сами сети существуют — это показано генетически. Спорно другое: сколько ресурсов реально идёт по ним между деревьями и кому это выгодно. В швейцарском лесу метка из ели нашлась в соседних буках, соснах и лиственницах — до 40&nbsp;% углерода их тонких корней. Авторы связывают это с общими грибами, но другие пути (например, сросшиеся корни) не исключены.</p>
+    <aside class="nb nb--debate"><b>Nota bene: «материнское дерево».</b> Идея, что большие деревья-«матери» узнают своё потомство и подкармливают его через сеть, популярна благодаря книгам. Но в обзорах 2023&nbsp;г. сказано: рецензируемых доказательств, что взрослые деревья предпочтительно снабжают своих потомков, нет; перенос углерода в полевых опытах обычно мал, а грибы, судя по всему, распоряжаются им в своих интересах.</aside>
+    <p class="conf conf--debated">сети — надёжно · роль «матерей» — обсуждается</p>
+    <p class="src">Источники: <a href="#ref-beiler">Beiler et al., 2010</a>; <a href="#ref-klein">Klein et al., 2016</a>; <a href="#ref-karst">Karst et al., 2023</a>; <a href="#ref-henriksson">Henriksson et al., 2023</a>; <a href="#ref-simard2021">Simard, 2021</a>.</p>
+    <p class="hand card__hand" data-hand>розовым — связи самого крупного дерева</p>
+  </article>
+</section>
+
+<!-- V -->
+<section class="chapter" id="ch5" data-ch="4" aria-labelledby="h-ch5">
+  <article class="card" data-side="left">
+    <div class="card__inks" aria-hidden="true"><i class="ink ink--pink"></i><i class="ink ink--blue"></i><i class="roller"></i></div>
+    <p class="card__no">Глава V <span>экз. № 005</span></p>
+    <h2 id="h-ch5">Сигнал <span class="h-q">(гипотеза)</span></h2>
+    <p>Когда насекомые объедают дерево, его соседи иногда включают защиту заранее. В нескольких опытах это происходило, только если растения были связаны грибом: у томатов, у бобов с тлёй, у сеянцев пихты Дугласа и сосны жёлтой — у сосен росла активность защитных ферментов.</p>
+    <figure class="scheme scheme--wave" aria-label="Схема: сигнал от атакованного растения расходится по сети волной — это гипотеза">
+      <svg viewBox="0 0 320 110" role="img" aria-hidden="true">
+        <path d="M30 60 H290" class="s-path"/>
+        <circle cx="30" cy="60" r="11" class="w-src"/><circle cx="110" cy="60" r="8" class="w-n w1"/><circle cx="190" cy="60" r="8" class="w-n w2"/><circle cx="270" cy="60" r="8" class="w-n w3"/>
+        <text x="30" y="92" class="s-lbl s-c">тля</text><text x="190" y="30" class="s-lbl s-c s-pink">?  ?  ?</text>
+      </svg>
+    </figure>
+    <p class="fact"><b class="lbl">Что известно.</b> Все такие опыты сделаны в горшках и теплицах, на сеянцах и травах, с небольшим числом повторов. Трудно исключить другие пути сигнала: летучие вещества, выделения корней, почвенную воду. В настоящем лесу прямых доказательств «предупреждений» по грибной сети пока нет.</p>
+    <aside class="nb nb--debate"><b>Nota bene.</b> Бегущая по сцене волна — иллюстрация гипотезы, а не измеренное явление. Слово «общаются» — метафора: у деревьев нет намерений, а у гриба свои интересы.</aside>
+    <p class="conf conf--hypo">гипотеза</p>
+    <p class="src">Источники: <a href="#ref-song2010">Song et al., 2010</a>; <a href="#ref-babikova">Babikova et al., 2013</a>; <a href="#ref-song2015">Song et al., 2015</a>; <a href="#ref-karst">Karst et al., 2023</a>.</p>
+    <p class="hand card__hand" data-hand>волна нарисована, не измерена!</p>
+  </article>
+</section>
+
+<!-- VI -->
+<section class="chapter" id="ch6" data-ch="5" aria-labelledby="h-ch6">
+  <article class="card" data-side="right">
+    <div class="card__inks" aria-hidden="true"><i class="ink ink--pink"></i><i class="ink ink--blue"></i><i class="roller"></i></div>
+    <p class="card__no">Глава VI <span>экз. № 006</span></p>
+    <h2 id="h-ch6">Плодовое тело</h2>
+    <p>То, что мы называем грибом, — лишь плодовое тело, «яблоко» на невидимой яблоне-грибнице. На сцене — мухомор красный: он образует микоризу с берёзой, сосной и елью. Под шляпкой — пластинки, с которых слетают споры.</p>
+    <figure class="scheme scheme--spores" aria-label="Схема: споры падают из-под шляпки и подхватываются потоком воздуха">
+      <svg viewBox="0 0 320 120" role="img" aria-hidden="true">
+        <path d="M100 50 Q160 -6 220 50 Z" class="s-cap"/><path d="M152 50 H168 L172 116 H148 Z" class="s-stem"/>
+        <g class="spores"><circle cx="130" cy="58" r="2.4"/><circle cx="150" cy="60" r="2.4"/><circle cx="172" cy="58" r="2.4"/><circle cx="192" cy="60" r="2.4"/><circle cx="140" cy="62" r="2.4"/><circle cx="182" cy="62" r="2.4"/></g>
+        <text x="236" y="80" class="s-lbl">споры</text>
+      </svg>
+    </figure>
+    <p class="fact"><b class="lbl">Факт.</b> Спору отстреливает капля жидкости (капля Буллера) — с ускорением порядка 10&nbsp;000&nbsp;g. А шляпка, испаряя воду, охлаждает воздух под собой и создаёт свой маленький ветер, который выносит споры наружу.</p>
+    <aside class="nb"><b>Nota bene.</b> Сбор грибов грибнице почти не вредит: за 29 лет швейцарского опыта ни срезание, ни выкручивание не снизили урожай. Навредило другое — вытаптывание подстилки.</aside>
+    <p class="conf conf--sure">надёжно</p>
+    <p class="src">Источники: <a href="#ref-pringle">Pringle et al., 2005</a>; <a href="#ref-dressaire">Dressaire et al., 2016</a>; <a href="#ref-egli">Egli et al., 2006</a>.</p>
+    <p class="hand card__hand" data-hand>Amanita muscaria · пластинки белые</p>
+  </article>
+</section>
+
+<!-- VII -->
+<section class="chapter" id="ch7" data-ch="6" aria-labelledby="h-ch7">
+  <article class="card" data-side="left">
+    <div class="card__inks" aria-hidden="true"><i class="ink ink--pink"></i><i class="ink ink--blue"></i><i class="roller"></i></div>
+    <p class="card__no">Глава VII <span>экз. № 007</span></p>
+    <h2 id="h-ch7">Разложение</h2>
+    <p>Не все грибы дружат с живыми деревьями. <dfn>Сапротрофы</dfn> едят мёртвое. Грибы белой гнили — почти единственные организмы, которые умеют эффективно разбирать <dfn>лигнин</dfn>, самый прочный полимер древесины. Без них лес тонул бы в валежнике, а углерод и азот не возвращались бы в почву.</p>
+    <figure class="scheme scheme--decay" aria-label="Схема: бревно истончается, возвращая вещества в почву и углекислый газ в воздух">
+      <svg viewBox="0 0 320 110" role="img" aria-hidden="true">
+        <rect x="40" y="46" width="240" height="30" rx="15" class="s-log"/>
+        <rect x="40" y="46" width="240" height="30" rx="15" class="s-rot"/>
+        <path d="M60 30 q6 -10 0 -20 M160 30 q6 -10 0 -20 M260 30 q6 -10 0 -20" class="s-path s-up"/>
+        <text x="186" y="18" class="s-lbl">CO₂</text><text x="100" y="102" class="s-lbl s-blue">азот, фосфор — в почву</text>
+      </svg>
+    </figure>
+    <p class="fact"><b class="lbl">Факт.</b> Ферменты, разрушающие лигнин (пероксидазы), по данным геномов появились у грибов около 300 млн лет назад, в конце каменноугольного периода.</p>
+    <aside class="nb nb--debate"><b>Nota bene.</b> Красивая гипотеза: пока грибы не научились есть лигнин, древесина копилась и превращалась в каменный уголь. Её оспорили: пик угленакопления пришёлся на леса плаунов, где лигнина было мало, а главную роль, видимо, сыграли климат и тектоника.</aside>
+    <p class="conf conf--debated">разложение — надёжно · «угольная» гипотеза — обсуждается</p>
+    <p class="src">Источники: <a href="#ref-floudas">Floudas et al., 2012</a>; <a href="#ref-nelsen">Nelsen et al., 2016</a>.</p>
+    <p class="hand card__hand" data-hand>трутовик на валежине — белая гниль</p>
+  </article>
+</section>
+
+<!-- VIII -->
+<section class="chapter" id="ch8" data-ch="7" aria-labelledby="h-ch8">
+  <article class="card" data-side="right">
+    <div class="card__inks" aria-hidden="true"><i class="ink ink--pink"></i><i class="ink ink--blue"></i><i class="roller"></i></div>
+    <p class="card__no">Глава VIII <span>экз. № 008</span></p>
+    <h2 id="h-ch8">Угрозы</h2>
+    <p>Микоризный гриб живёт за счёт дерева. Сплошная рубка оставляет его без еды: после неё разнообразие эктомикоризных грибов резко падает, а сообщество восстанавливается десятилетиями. Оставленные при рубке группы живых деревьев работают как «спасательные шлюпки» для грибов.</p>
+    <figure class="scheme scheme--cut" aria-label="Схема: после вырубки часть связей сети гаснет">
+      <svg viewBox="0 0 320 120" role="img" aria-hidden="true">
+        <g class="net-e"><line x1="40" y1="60" x2="120" y2="30"/><line x1="40" y1="60" x2="120" y2="96"/><line x1="120" y1="30" x2="120" y2="96"/></g>
+        <g class="net-e cut-e"><line x1="120" y1="30" x2="210" y2="40"/><line x1="120" y1="96" x2="210" y2="86"/><line x1="210" y1="40" x2="286" y2="62"/><line x1="210" y1="86" x2="286" y2="62"/></g>
+        <g class="net-n"><circle cx="40" cy="60" r="8"/><circle cx="120" cy="30" r="6"/><circle cx="120" cy="96" r="6"/></g>
+        <g class="net-n cut-n"><rect x="202" y="34" width="14" height="10"/><rect x="202" y="80" width="14" height="10"/><rect x="278" y="56" width="14" height="10"/></g>
+        <text x="246" y="112" class="s-lbl s-c">вырубка</text>
+      </svg>
+    </figure>
+    <p class="fact"><b class="lbl">Факт.</b> Азотные выпадения из воздуха (от удобрений и сжигания топлива) по всей Европе меняют состав эктомикоризных грибов. По глобальной карте 2025&nbsp;г. лишь около 10&nbsp;% «горячих точек» разнообразия микоризных грибов лежат на охраняемых территориях.</p>
+    <aside class="nb"><b>Nota bene.</b> Почва — медленная система. Даже когда лес вырастает снова, подземное сообщество может ещё долго отличаться от старовозрастного.</aside>
+    <p class="conf conf--sure">надёжно</p>
+    <p class="src">Источники: <a href="#ref-jones">Jones et al., 2003</a>; <a href="#ref-linde">van der Linde et al., 2018</a>; <a href="#ref-lilleskov">Lilleskov et al., 2019</a>; <a href="#ref-nuland">Van Nuland et al., 2025</a>.</p>
+    <p class="hand card__hand" data-hand>пни остаются — связи гаснут</p>
+  </article>
+</section>
+
+<!-- IX -->
+<section class="chapter" id="ch9" data-ch="8" aria-labelledby="h-ch9">
+  <article class="card" data-side="left">
+    <div class="card__inks" aria-hidden="true"><i class="ink ink--pink"></i><i class="ink ink--blue"></i><i class="roller"></i></div>
+    <p class="card__no">Глава IX <span>экз. № 009</span></p>
+    <h2 id="h-ch9">Лес как сеть</h2>
+    <p>Сверху, если убрать землю, лес похож на схему нейросети: узлы, связи, сигналы. Это сильная метафора, но только метафора. У леса нет мозга. Точнее представлять себе инфраструктуру и рынок: по нитям идут вода, углерод и минеральное питание, а каждый участник тянет в свою сторону.</p>
+    <figure class="scheme scheme--bars" aria-label="Столбчатая диаграмма: 13 гигатонн CO₂ в год уходит в микоризные грибы — около 36 процентов от выбросов ископаемого топлива">
+      <svg viewBox="0 0 320 110" role="img" aria-hidden="true">
+        <rect x="118" y="20" width="192" height="26" class="bar bar--fossil"/><rect x="118" y="62" width="69" height="26" class="bar bar--myco"/>
+        <text x="8" y="38" class="s-lbl">выбросы</text><text x="8" y="80" class="s-lbl">в грибы</text>
+        <text x="300" y="38" class="s-lbl s-r s-inv">≈ 36 Гт</text><text x="194" y="80" class="s-lbl">≈ 13 Гт CO₂ / год</text>
+      </svg>
+    </figure>
+    <p class="fact"><b class="lbl">Факт.</b> По сводке 2023&nbsp;г., растения ежегодно передают микоризным грибам около 13 млрд тонн CO₂-эквивалента — примерно 36&nbsp;% годовых выбросов от ископаемого топлива. Сколько из этого надолго остаётся в почве, пока неизвестно.</p>
+    <aside class="nb"><b>Nota bene.</b> Что уверенно: без грибов большинство растений жили бы хуже, а сети гиф связывают почву и лес. Что спорно: насколько деревья «делятся» и «общаются». Честный ответ науки 2020-х — «данных пока мало».</aside>
+    <p class="conf conf--debated">обмен углеродом — надёжно · «лес-мозг» — метафора</p>
+    <p class="src">Источники: <a href="#ref-hawkins">Hawkins et al., 2023</a>; <a href="#ref-karst">Karst et al., 2023</a>.</p>
+    <p class="hand card__hand" data-hand>дальше — вклеенные листы A–G</p>
+  </article>
+</section>
+
+</main>
+
+<!-- ========= ПРИЛОЖЕНИЯ ========= -->
+<div id="appendices" class="appendices">
+<p class="app-intro"><span class="riso" data-text="Приложения">Приложения</span><span class="hand" data-hand>вклеенные листы · обращаться бережно</span></p>
+
+<!-- A -->
+<section class="sheet sheet--a" id="app-a" aria-labelledby="h-a">
+  <i class="tape tape--l" aria-hidden="true"></i><i class="tape tape--r" aria-hidden="true"></i>
+  <p class="sheet__no">Лист A</p>
+  <h2 id="h-a">Типы микоризы</h2>
+  <p class="sheet__lead">Две главные формы союза. Схемы — поперечный срез корня, клетки коры показаны сотами.</p>
+  <div class="ab">
+    <figure class="ab__fig">
+      <svg viewBox="0 0 300 300" role="img" aria-labelledby="t-ecm">
+        <title id="t-ecm">Эктомикориза: гриб образует мантию снаружи корня и сеть Гартига между клетками, внутрь клеток не проникает</title>
+        <g class="ab-hyph draw">
+          <path d="M150 16 C160 6 170 2 184 0"/><path d="M58 60 C40 40 28 34 8 30"/><path d="M252 70 C272 56 284 50 300 46"/><path d="M40 190 C20 204 10 214 0 232"/><path d="M262 214 C280 230 290 246 296 270"/><path d="M130 286 C124 294 118 298 108 300"/>
+        </g>
+        <circle cx="150" cy="150" r="128" class="ab-mantle"/>
+        <circle cx="150" cy="150" r="112" class="ab-cortex"/>
+        <g class="ab-cells" id="cells-ecm"></g>
+        <circle cx="150" cy="150" r="34" class="ab-stele"/>
+        <text x="150" y="155" class="s-lbl s-c">проводящий цилиндр</text>
+      </svg>
+      <figcaption><b class="k-pink">Эктомикориза (ЭКМ)</b><br>Мантия снаружи, сеть Гартига <em>между</em> клетками.</figcaption>
+    </figure>
+    <figure class="ab__fig">
+      <svg viewBox="0 0 300 300" role="img" aria-labelledby="t-am">
+        <title id="t-am">Арбускулярная микориза: гифы проникают внутрь клеток коры и ветвятся в них арбускулами, мантии нет</title>
+        <circle cx="150" cy="150" r="112" class="ab-cortex"/>
+        <g class="ab-cells" id="cells-am"></g>
+        <circle cx="150" cy="150" r="34" class="ab-stele"/>
+        <g class="ab-hyph draw"><path d="M150 0 C152 20 146 32 150 46"/><path d="M0 170 C22 168 34 172 44 170"/><path d="M300 120 C278 124 266 118 256 122"/></g>
+        <text x="150" y="155" class="s-lbl s-c">проводящий цилиндр</text>
+      </svg>
+      <figcaption><b class="k-green">Арбускулярная (АМ)</b><br>Мантии нет, арбускулы <em>внутри</em> клеток.</figcaption>
+    </figure>
+  </div>
+  <div class="table-wrap">
+  <table class="cmp">
+    <caption class="sr">Сравнение эктомикоризы и арбускулярной микоризы</caption>
+    <thead><tr><th scope="col">Признак</th><th scope="col">Эктомикориза</th><th scope="col">Арбускулярная</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Доля видов растений</th><td>≈ 2&nbsp;%</td><td>≈ 72&nbsp;%</td></tr>
+      <tr><th scope="row">Типичные хозяева</th><td>сосна, ель, лиственница, дуб, бук, берёза, эвкалипт, диптерокарповые</td><td>злаки, большинство трав, клён, ясень, тропические деревья, почти все культуры</td></tr>
+      <tr><th scope="row">Грибы</th><td>≈ 20–25 тыс. видов базидиомицетов и аскомицетов: белый, подберёзовик, мухомор, трюфель</td><td>гломеромицеты — несколько сотен описанных видов, плодовых тел-«грибов» нет</td></tr>
+      <tr><th scope="row">Где гриб</th><td>мантия снаружи + сеть Гартига между клетками</td><td>внутри клеток коры: арбускулы, везикулы</td></tr>
+      <tr><th scope="row">Специализация</th><td>может брать азот и фосфор из органики</td><td>в основном фосфат из почвенного раствора</td></tr>
+      <tr><th scope="row">Где преобладает</th><td>холодные и умеренные леса с медленным разложением</td><td>тропики, степи, луга, поля</td></tr>
+      <tr><th scope="row">Возраст союза</th><td>моложе; у грибов возникала независимо десятки раз</td><td>> 400 млн лет, ровесница выхода растений на сушу</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="src">Источники: <a href="#ref-brundrett">Brundrett &amp; Tedersoo, 2018</a>; <a href="#ref-tedersoo">Tedersoo et al., 2010</a>; <a href="#ref-smithread">Smith &amp; Read, 2008</a>; <a href="#ref-remy">Remy et al., 1994</a>. Есть и другие типы: эрикоидная (вереск, черника), орхидная (≈ 10&nbsp;% видов растений), около 8&nbsp;% растений не образуют микоризы вовсе.</p>
+  <i class="corner" aria-hidden="true"></i>
+</section>
+
+<!-- B -->
+<section class="sheet sheet--b" id="app-b" aria-labelledby="h-b">
+  <i class="tape tape--c" aria-hidden="true"></i>
+  <p class="sheet__no">Лист B</p>
+  <h2 id="h-b">Хроника исследований</h2>
+  <ol class="chron">
+    <li><b>1840</b><p>Теодор Гартиг описывает у хвойных странную сеть между клетками корня — позже её назовут сетью Гартига и поймут, что она грибная.</p></li>
+    <li><b>1882</b><p>Франтишек Каменский: подъельник (<i>Monotropa</i>) без хлорофилла живёт за счёт гриба на корнях.</p></li>
+    <li><b>1885</b><p>Альберт Бернхард Франк вводит слово <i>Mykorhiza</i> и предполагает, что союз взаимовыгоден.</p></li>
+    <li><b>1905</b><p>Исидор Голло называет внутриклеточные «деревца» гриба арбускулами.</p></li>
+    <li><b>1960</b><p>Эрик Бьёркман метит деревья радиоактивным углеродом: метка через гриб доходит до подъельника. Перенос деревья → гриб → другое растение доказан.</p></li>
+    <li><b>1971</b><p>Гаджил и Гаджил: микоризные грибы замедляют разложение подстилки («эффект Гаджила»).</p></li>
+    <li><b>1984</b><p>Фрэнсис и Рид: в лаборатории углерод переходит между растениями по мицелию арбускулярного гриба.</p></li>
+    <li><b>1992</b><p>«Огромный гриб» в Мичигане: одна особь опёнка на 15&nbsp;га.</p></li>
+    <li><b>1994</b><p>В кремнистых сланцах Райни найдены арбускулы возрастом более 400 млн лет.</p></li>
+    <li class="is-debate"><b>1997</b><p>Сюзанна Симард: в поле углерод переходит от берёзы к пихте Дугласа. Журнал Nature выносит на обложку «wood-wide web».</p></li>
+    <li><b>2003</b><p>В Орегоне описана особь опёнка на 965&nbsp;га.</p></li>
+    <li><b>2010</b><p>Бейлер и др. генетически картируют сеть: крупные деревья — узлы.</p></li>
+    <li class="is-debate"><b>2010–2015</b><p>Опыты с томатами, бобами и сеянцами хвойных: «предупредительные» сигналы через грибы.</p></li>
+    <li class="is-debate"><b>2015–2021</b><p>Книги Петера Вольлебена и Сюзанны Симард делают «говорящий лес» мировым сюжетом.</p></li>
+    <li><b>2016</b><p>Кляйн, Зигвольф и Кёрнер: 13C-метка из крон елей находится в корнях соседних деревьев других видов.</p></li>
+    <li><b>2019</b><p>Первая глобальная карта симбиозов деревьев по 1,1 млн лесных участков.</p></li>
+    <li class="is-debate"><b>2023</b><p>Карст, Джонс и Хуксема находят «положительное смещение цитирования»: слабые результаты пересказываются как сильные. Хенрикссон и др. пересматривают гипотезу «материнских деревьев». Идёт публичный спор.</p></li>
+    <li><b>2023</b><p>Хокинс и др.: около 13 Гт CO₂-экв. в год уходит в микоризные грибы.</p></li>
+    <li><b>2025</b><p>Глобальный подземный атлас: горячие точки грибного разнообразия почти не охраняются.</p></li>
+  </ol>
+  <p class="hand" data-hand>розовой меткой — годы споров</p>
+  <div class="stamp stamp--blue sheet__stamp" data-stamp><span>сверено</span><b>по источникам</b><span>см. лист G</span></div>
+</section>
+
+<!-- C -->
+<section class="sheet sheet--c" id="app-c" aria-labelledby="h-c">
+  <i class="tape tape--l" aria-hidden="true"></i><i class="tape tape--r" aria-hidden="true"></i>
+  <p class="sheet__no">Лист C</p>
+  <h2 id="h-c">Карта мира: кто с кем живёт</h2>
+  <p class="sheet__lead">Цвет точки — преобладающий тип микоризы, густота — примерная плотность растительности. Схема по биомам, упрощённая. Наведите курсор или коснитесь региона.</p>
+  <div class="map">
+    <canvas id="map" width="720" height="300" role="img" aria-label="Растровая карта мира: эктомикориза преобладает в бореальных и умеренных лесах, арбускулярная — в тропиках, степях и на лугах, эрикоидная — в тундре"></canvas>
+    <div class="map__tip" id="map-tip" role="status" aria-live="polite"></div>
+  </div>
+  <ul class="map__legend">
+    <li><i class="dot dot--pink"></i>эктомикориза</li>
+    <li><i class="dot dot--green"></i>арбускулярная</li>
+    <li><i class="dot dot--blue"></i>эрикоидная</li>
+  </ul>
+  <div class="map__list" id="map-list" aria-label="Биомы"></div>
+  <p class="src">По мотивам: <a href="#ref-steidinger">Steidinger et al., 2019</a>; <a href="#ref-brundrett">Brundrett &amp; Tedersoo, 2018</a>. Границы биомов условные.</p>
+</section>
+
+<!-- D -->
+<section class="sheet sheet--d" id="app-d" aria-labelledby="h-d">
+  <i class="tape tape--c" aria-hidden="true"></i>
+  <p class="sheet__no">Лист D</p>
+  <h2 id="h-d">В цифрах</h2>
+  <div class="stats">
+    <div class="stat"><p class="stat__n"><span data-count="85">85</span>&nbsp;%</p><p>видов наземных растений образуют микоризу (из них арбускулярную — около 72&nbsp;%)</p><p class="src">Brundrett &amp; Tedersoo, 2018</p></div>
+    <div class="stat"><p class="stat__n"><span data-count="60">60</span>&nbsp;%</p><p>стволов деревьев на Земле принадлежат эктомикоризным видам</p><p class="src">Steidinger et al., 2019</p></div>
+    <div class="stat"><p class="stat__n">≈&nbsp;<span data-count="13.12" data-dec="2">13,12</span></p><p>Гт CO₂-экв. в год растения отдают микоризным грибам</p><p class="src">Hawkins et al., 2023</p></div>
+    <div class="stat"><p class="stat__n">&gt;&nbsp;<span data-count="400">400</span></p><p>млн лет — возраст древнейших ископаемых арбускул</p><p class="src">Remy et al., 1994</p></div>
+    <div class="stat"><p class="stat__n"><span data-count="1">1</span>+&nbsp;км</p><p>гиф в горсти лесной почвы (≈ 100&nbsp;г): в грамме их бывают десятки метров. Это порядок величины, разброс огромен</p><p class="src">Leake et al., 2004</p></div>
+    <div class="stat"><p class="stat__n"><span data-count="47">47</span></p><p>соседей у самого связанного дерева в картированной сети пихты Дугласа</p><p class="src">Beiler et al., 2010</p></div>
+    <div class="stat"><p class="stat__n"><span data-count="80">80</span>&nbsp;%</p><p>азота, получаемого деревьями бореальных лесов за год, — через грибы и бактерии</p><p class="src">van der Heijden et al., 2008</p></div>
+    <div class="stat"><p class="stat__n">&lt;&nbsp;<span data-count="10">10</span>&nbsp;%</p><p>горячих точек разнообразия микоризных грибов — на охраняемых территориях</p><p class="src">Van Nuland et al., 2025</p></div>
+  </div>
+  <div class="stamp stamp--pink sheet__stamp" data-stamp><span>проверено</span><b>№ 0413</b><span>30.IX.2026</span></div>
+  <i class="corner" aria-hidden="true"></i>
+</section>
+
+<!-- E -->
+<section class="sheet sheet--e" id="app-e" aria-labelledby="h-e">
+  <p class="sheet__no">Лист E</p>
+  <h2 id="h-e">Грибы-рекордсмены</h2>
+  <p class="sheet__lead">Этикетки гербария. Не все экземпляры поместились бы в папку.</p>
+  <div class="labels">
+    <article class="hlabel">
+      <i class="tape tape--c" aria-hidden="true"></i>
+      <svg class="hlabel__pic" viewBox="0 0 120 70" aria-hidden="true"><path d="M8 60 C30 40 40 64 60 46 S96 58 112 40" class="pic-line"/><path d="M20 58 C24 48 30 44 36 46 M70 50 C72 40 80 36 86 38" class="pic-line"/></svg>
+      <p class="hlabel__no">Herb. MYC · № 1</p>
+      <h3><i>Armillaria ostoyae</i></h3><p class="hlabel__ru">опёнок тёмный</p>
+      <dl><dt>Locus</dt><dd>Малхёр, Орегон, США</dd><dt>Рекорд</dt><dd>одна генетическая особь ≈ 965&nbsp;га, от края до края ≈ 3,8&nbsp;км</dd><dt>Aetas</dt><dd>оценки 1 900–8 650 лет</dd><dt>Leg.</dt><dd>Ferguson et al., 2003</dd></dl>
+      <p class="hlabel__note hand" data-hand>паразит: губит хвойные</p>
+    </article>
+    <article class="hlabel">
+      <i class="tape tape--c" aria-hidden="true"></i>
+      <svg class="hlabel__pic" viewBox="0 0 120 70" aria-hidden="true"><path d="M30 34 Q44 14 58 34 Z M42 34 L44 62 M64 38 Q76 22 88 38 Z M75 38 L76 62" class="pic-line"/></svg>
+      <p class="hlabel__no">Herb. MYC · № 2</p>
+      <h3><i>Armillaria gallica</i></h3><p class="hlabel__ru">опёнок галльский</p>
+      <dl><dt>Locus</dt><dd>Верхний полуостров Мичигана, США</dd><dt>Рекорд</dt><dd>≈ 75&nbsp;га, ≈ 400&nbsp;т</dd><dt>Aetas</dt><dd>не меньше 2 500 лет</dd><dt>Leg.</dt><dd>Smith et al., 1992; Anderson et al., 2018</dd></dl>
+      <p class="hlabel__note hand" data-hand>в 1992 думали — 15 га</p>
+    </article>
+    <article class="hlabel">
+      <i class="tape tape--c" aria-hidden="true"></i>
+      <svg class="hlabel__pic" viewBox="0 0 120 70" aria-hidden="true"><path d="M6 30 H114 M10 30 C20 44 100 44 110 30 M20 34 C40 40 80 40 100 34" class="pic-line"/></svg>
+      <p class="hlabel__no">Herb. MYC · № 3</p>
+      <h3><i>Fomitiporia ellipsoidea</i></h3><p class="hlabel__ru">трутовик эллипсоидный</p>
+      <dl><dt>Locus</dt><dd>остров Хайнань, Китай</dd><dt>Рекорд</dt><dd>самое большое плодовое тело: 10,85&nbsp;м в длину, 400–500&nbsp;кг</dd><dt>Aetas</dt><dd>≈ 20 лет</dd><dt>Leg.</dt><dd>Dai &amp; Cui, 2011</dd></dl>
+      <p class="hlabel__note hand" data-hand>на упавшем стволе</p>
+    </article>
+    <article class="hlabel">
+      <i class="tape tape--c" aria-hidden="true"></i>
+      <svg class="hlabel__pic" viewBox="0 0 120 70" aria-hidden="true"><ellipse cx="60" cy="40" rx="34" ry="24" class="pic-line"/><path d="M40 28 q6 -4 12 0 M64 24 q6 -4 12 0" class="pic-line"/></svg>
+      <p class="hlabel__no">Herb. MYC · № 4</p>
+      <h3><i>Calvatia gigantea</i></h3><p class="hlabel__ru">головач гигантский</p>
+      <dl><dt>Locus</dt><dd>луга умеренного пояса</dd><dt>Рекорд</dt><dd>по оценке Буллера — свыше 7 трлн спор в одном плодовом теле</dd><dt>Leg.</dt><dd>Buller, 1909</dd></dl>
+      <p class="hlabel__note hand" data-hand>почти ни одна не прорастёт</p>
+    </article>
+    <article class="hlabel">
+      <i class="tape tape--c" aria-hidden="true"></i>
+      <svg class="hlabel__pic" viewBox="0 0 120 70" aria-hidden="true"><path d="M60 66 V10 M60 40 L44 26 M60 30 L76 16 M60 50 L78 40" class="pic-line"/><path d="M52 58 q8 6 16 0" class="pic-line"/></svg>
+      <p class="hlabel__no">Herb. MYC · № 5</p>
+      <h3><i>Aglaophyton major</i> + гриб</h3><p class="hlabel__ru">древнейшая микориза</p>
+      <dl><dt>Locus</dt><dd>кремнистые сланцы Райни, Шотландия</dd><dt>Рекорд</dt><dd>арбускулы в клетках ископаемого растения</dd><dt>Aetas</dt><dd>более 400 млн лет</dd><dt>Leg.</dt><dd>Remy et al., 1994</dd></dl>
+      <p class="hlabel__note hand" data-hand>растение без корней — а гриб уже был</p>
+    </article>
+    <article class="hlabel">
+      <i class="tape tape--c" aria-hidden="true"></i>
+      <svg class="hlabel__pic" viewBox="0 0 120 70" aria-hidden="true"><path d="M50 66 V8 H70 V66 M50 20 H70 M50 40 H70" class="pic-line"/></svg>
+      <p class="hlabel__no">Herb. MYC · № 6</p>
+      <h3><i>Prototaxites</i></h3><p class="hlabel__ru">загадочный «ствол» девона</p>
+      <dl><dt>Locus</dt><dd>девонские отложения, разные континенты</dd><dt>Рекорд</dt><dd>столбы высотой до ≈ 8&nbsp;м, около 400 млн лет назад</dd><dt>Leg.</dt><dd>Hueber, 2001; сомнения — Loron et al., 2026</dd></dl>
+      <div class="stamp stamp--pink stamp--sm" data-stamp><b>спорно</b></div>
+      <p class="hlabel__note hand" data-hand>гриб? новые работы сомневаются</p>
+    </article>
+  </div>
+</section>
+
+<!-- F -->
+<section class="sheet sheet--f" id="app-f" aria-labelledby="h-f">
+  <i class="tape tape--l" aria-hidden="true"></i>
+  <p class="sheet__no">Лист F</p>
+  <h2 id="h-f">Как не навредить</h2>
+  <div class="tips">
+    <div>
+      <h3>Грибнику</h3>
+      <ul class="checks">
+        <li><b>Срезать или выкручивать — неважно.</b> В 29-летнем опыте оба способа не снизили урожай.</li>
+        <li><b>Меньше топтаться.</b> Вытаптывание подстилки уменьшало число плодовых тел. Ходите тропами, не ворошите мох и подстилку граблями или палкой.</li>
+        <li><b>Не сбивайте «несъедобные» грибы.</b> Они тоже партнёры деревьев и корм для животных и насекомых.</li>
+        <li><b>Оставьте переростков.</b> Старые грибы ещё рассеивают споры.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Садоводу</h3>
+      <ul class="checks">
+        <li><b>Не перекармливайте фосфором.</b> При избытке фосфата растения меньше вкладываются в грибы, и арбускулярная микориза слабеет.</li>
+        <li><b>Меньше перекапывайте.</b> Вспашка рвёт сеть гиф; мульча и мелкое рыхление её сохраняют.</li>
+        <li><b>Держите почву живой.</b> Сидераты и многолетники кормят грибы, пока грядки пустуют. Капустные и свёкла микоризы почти не образуют — им грибы не помогут.</li>
+        <li><b>Осторожнее с «микоризой в пакете».</b> В проверке 25 коммерческих препаратов корни в стерильной почве смогли заселить лишь 4. В обычной почве свои грибы и так есть.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Лесовладельцу</h3>
+      <ul class="checks">
+        <li><b>Оставляйте при рубке группы живых деревьев.</b> Они сохраняют грибы для будущего подроста.</li>
+        <li><b>Оставляйте валежник и пни.</b> Это пища и дом для сапротрофов и сотен видов.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="src">Источники: <a href="#ref-egli">Egli et al., 2006</a>; <a href="#ref-smithread">Smith &amp; Read, 2008</a>; <a href="#ref-kabir">Kabir, 2005</a>; <a href="#ref-salomon">Salomon et al., 2022</a>; <a href="#ref-jones">Jones et al., 2003</a>.</p>
+  <div class="stamp stamp--blue sheet__stamp" data-stamp><span>для полевых</span><b>работ</b><span>носить с собой</span></div>
+  <i class="corner" aria-hidden="true"></i>
+</section>
+
+<!-- G -->
+<section class="sheet sheet--g" id="app-g" aria-labelledby="h-g">
+  <i class="tape tape--c" aria-hidden="true"></i>
+  <p class="sheet__no">Лист G</p>
+  <h2 id="h-g">Словарь и источники</h2>
+  <dl class="gloss">
+    <dt>Гифа</dt><dd>Нить гриба толщиной в несколько микрометров. Растёт кончиком.</dd>
+    <dt>Мицелий, грибница</dt><dd>Вся сеть гиф одного гриба — его основное тело.</dd>
+    <dt>Микориза</dt><dd>Симбиоз гриба с корнями растения, обычно с обменом углерода на минеральное питание.</dd>
+    <dt>Эктомикориза</dt><dd>Гриб образует мантию вокруг корня и сеть Гартига между клетками коры.</dd>
+    <dt>Арбускулярная микориза</dt><dd>Гриб (гломеромицет) проникает внутрь клеток коры и образует арбускулы.</dd>
+    <dt>Арбускула</dt><dd>Древовидно ветвящаяся гифа внутри клетки корня — место обмена.</dd>
+    <dt>Сеть Гартига</dt><dd>Лабиринт гиф между клетками коры корня при эктомикоризе.</dd>
+    <dt>Общая микоризная сеть</dt><dd>Мицелий, одновременно связанный с корнями нескольких растений.</dd>
+    <dt>Генет</dt><dd>Генетическая особь: всё, что выросло из одной споры или зиготы, даже если разорвано на куски.</dd>
+    <dt>Плодовое тело</dt><dd>Надземная (или подземная, как у трюфеля) структура, производящая споры.</dd>
+    <dt>Сапротроф</dt><dd>Организм, питающийся мёртвым органическим веществом.</dd>
+    <dt>Лигнин</dt><dd>Прочный полимер клеточных стенок древесины. Эффективно его разрушают грибы белой гнили.</dd>
+    <dt>Микогетеротроф</dt><dd>Растение без фотосинтеза, получающее углерод через гриб от соседних растений (подъельник, некоторые орхидеи).</dd>
+  </dl>
+
+  <h3 class="refs__h">Литература</h3>
+  <ol class="refs">
+    <li id="ref-anderson">Anderson J.B., Bruhn J.N., Kasimer D., Wang H., Rodrigue N., Smith M.L. 2018. Clonal evolution and genome stability in a 2500-year-old fungal individual. <i>Proc. R. Soc. B</i> 285: 20182233.</li>
+    <li id="ref-babikova">Babikova Z., Gilbert L., Bruce T.J.A. et al. 2013. Underground signals carried through common mycelial networks warn neighbouring plants of aphid attack. <i>Ecology Letters</i> 16: 835–843.</li>
+    <li id="ref-beiler">Beiler K.J., Durall D.M., Simard S.W., Maxwell S.A., Kretzer A.M. 2010. Architecture of the wood-wide web: <i>Rhizopogon</i> spp. genets link multiple Douglas-fir cohorts. <i>New Phytologist</i> 185: 543–553.</li>
+    <li id="ref-bjorkman">Björkman E. 1960. <i>Monotropa hypopitys</i> L. — an epiparasite on tree roots. <i>Physiologia Plantarum</i> 13: 308–327.</li>
+    <li id="ref-brundrett">Brundrett M.C., Tedersoo L. 2018. Evolutionary history of mycorrhizal symbioses and global host plant diversity. <i>New Phytologist</i> 220: 1108–1115.</li>
+    <li id="ref-buller">Buller A.H.R. 1909. <i>Researches on Fungi</i>. Vol. 1. London: Longmans, Green.</li>
+    <li id="ref-dai">Dai Y.-C., Cui B.-K. 2011. <i>Fomitiporia ellipsoidea</i> has the largest fruiting body among the fungi. <i>Fungal Biology</i> 115: 813–814.</li>
+    <li id="ref-dressaire">Dressaire E., Yamada L., Song B., Roper M. 2016. Mushrooms use convectively created airflows to disperse their spores. <i>PNAS</i> 113: 2833–2838.</li>
+    <li id="ref-egli">Egli S., Peter M., Buser C., Stahel W., Ayer F. 2006. Mushroom picking does not impair future harvests — results of a long-term study in Switzerland. <i>Biological Conservation</i> 129: 271–276.</li>
+    <li id="ref-ferguson">Ferguson B.A., Dreisbach T.A., Parks C.G., Filip G.M., Schmitt C.L. 2003. Coarse-scale population structure of pathogenic <i>Armillaria</i> species in a mixed-conifer forest in the Blue Mountains of northeast Oregon. <i>Canadian Journal of Forest Research</i> 33: 612–623.</li>
+    <li id="ref-floudas">Floudas D., Binder M., Riley R. et al. 2012. The Paleozoic origin of enzymatic lignin decomposition reconstructed from 31 fungal genomes. <i>Science</i> 336: 1715–1719.</li>
+    <li id="ref-francis">Francis R., Read D.J. 1984. Direct transfer of carbon between plants connected by vesicular–arbuscular mycorrhizal mycelium. <i>Nature</i> 307: 53–56.</li>
+    <li id="ref-frank">Frank A.B. 1885. Über die auf Wurzelsymbiose beruhende Ernährung gewisser Bäume durch unterirdische Pilze. <i>Berichte der Deutschen Botanischen Gesellschaft</i> 3: 128–145.</li>
+    <li id="ref-gadgil">Gadgil R.L., Gadgil P.D. 1971. Mycorrhiza and litter decomposition. <i>Nature</i> 233: 133.</li>
+    <li id="ref-hawkins">Hawkins H.-J., Cargill R.I.M., Van Nuland M.E. et al. 2023. Mycorrhizal mycelium as a global carbon pool. <i>Current Biology</i> 33: R560–R573.</li>
+    <li id="ref-henriksson">Henriksson N., Marshall J., Högberg M.N., Högberg P., Polle A., Franklin O., Näsholm T. 2023. Re-examining the evidence for the mother tree hypothesis — resource sharing among trees via ectomycorrhizal networks. <i>New Phytologist</i> 239: 19–28.</li>
+    <li id="ref-hueber">Hueber F.M. 2001. Rotted wood–alga–fungus: the history and life of <i>Prototaxites</i> Dawson 1859. <i>Review of Palaeobotany and Palynology</i> 116: 123–158.</li>
+    <li id="ref-loron">Loron C., Cooper L., McMahon S. et al., Hetherington A.J. 2026. <i>Prototaxites</i> fossils are structurally and chemically distinct from extinct and extant Fungi. <i>Science Advances</i> 12(4): eaec6277 (препринт — 2025).</li>
+    <li id="ref-jones">Jones M.D., Durall D.M., Cairney J.W.G. 2003. Ectomycorrhizal fungal communities in young forest stands regenerating after clearcut logging. <i>New Phytologist</i> 157: 399–422.</li>
+    <li id="ref-kabir">Kabir Z. 2005. Tillage or no-tillage: impact on mycorrhizae. <i>Canadian Journal of Plant Science</i> 85: 23–29.</li>
+    <li id="ref-karst">Karst J., Jones M.D., Hoeksema J.D. 2023. Positive citation bias and overinterpreted results lead to misinformation on common mycorrhizal networks in forests. <i>Nature Ecology &amp; Evolution</i> 7: 501–511.</li>
+    <li id="ref-kiers">Kiers E.T., Duhamel M., Beesetty Y. et al. 2011. Reciprocal rewards stabilize cooperation in the mycorrhizal symbiosis. <i>Science</i> 333: 880–882.</li>
+    <li id="ref-klein">Klein T., Siegwolf R.T.W., Körner C. 2016. Belowground carbon trade among tall trees in a temperate forest. <i>Science</i> 352: 342–344.</li>
+    <li id="ref-leake">Leake J., Johnson D., Donnelly D., Muckle G., Boddy L., Read D. 2004. Networks of power and influence: the role of mycorrhizal mycelium in controlling plant communities and agroecosystem functioning. <i>Canadian Journal of Botany</i> 82: 1016–1045.</li>
+    <li id="ref-lilleskov">Lilleskov E.A., Kuyper T.W., Bidartondo M.I., Hobbie E.A. 2019. Atmospheric nitrogen deposition impacts on the structure and function of forest mycorrhizal communities: a review. <i>Environmental Pollution</i> 246: 148–162.</li>
+    <li id="ref-luginbuehl">Luginbuehl L.H., Menard G.N., Kurup S. et al. 2017. Fatty acids in arbuscular mycorrhizal fungi are synthesized by the host plant. <i>Science</i> 356: 1175–1178.</li>
+    <li id="ref-nelsen">Nelsen M.P., DiMichele W.A., Peters S.E., Boyce C.K. 2016. Delayed fungal evolution did not cause the Paleozoic peak in coal production. <i>PNAS</i> 113: 2442–2447.</li>
+    <li id="ref-pringle">Pringle A., Patek S.N., Fischer M., Stolze J., Money N.P. 2005. The captured launch of a ballistospore. <i>Mycologia</i> 97: 866–871.</li>
+    <li id="ref-remy">Remy W., Taylor T.N., Hass H., Kerp H. 1994. Four hundred-million-year-old vesicular arbuscular mycorrhizae. <i>PNAS</i> 91: 11841–11843.</li>
+    <li id="ref-salomon">Salomon M.J., Demarmels R., Watts-Williams S.J. et al. 2022. Global evaluation of commercial arbuscular mycorrhizal inoculants under greenhouse and field conditions. <i>Applied Soil Ecology</i> 169: 104225.</li>
+    <li id="ref-simard1997">Simard S.W., Perry D.A., Jones M.D., Myrold D.D., Durall D.M., Molina R. 1997. Net transfer of carbon between ectomycorrhizal tree species in the field. <i>Nature</i> 388: 579–582.</li>
+    <li id="ref-simard2021">Simard S. 2021. <i>Finding the Mother Tree</i>. New York: Knopf.</li>
+    <li id="ref-smith1992">Smith M.L., Bruhn J.N., Anderson J.B. 1992. The fungus <i>Armillaria bulbosa</i> is among the largest and oldest living organisms. <i>Nature</i> 356: 428–431.</li>
+    <li id="ref-smithread">Smith S.E., Read D.J. 2008. <i>Mycorrhizal Symbiosis</i>. 3rd ed. London: Academic Press.</li>
+    <li id="ref-song2010">Song Y.Y., Zeng R.S., Xu J.F., Li J., Shen X., Yihdego W.G. 2010. Interplant communication of tomato plants through underground common mycorrhizal networks. <i>PLoS ONE</i> 5: e13324.</li>
+    <li id="ref-song2015">Song Y.Y., Simard S.W., Carroll A., Mohn W.W., Zeng R.S. 2015. Defoliation of interior Douglas-fir elicits carbon transfer and stress signalling to ponderosa pine neighbors through ectomycorrhizal networks. <i>Scientific Reports</i> 5: 8495.</li>
+    <li id="ref-steidinger">Steidinger B.S., Crowther T.W., Liang J. et al. 2019. Climatic controls of decomposition drive the global biogeography of forest-tree symbioses. <i>Nature</i> 569: 404–408.</li>
+    <li id="ref-tedersoo">Tedersoo L., May T.W., Smith M.E. 2010. Ectomycorrhizal lifestyle in fungi: global diversity, distribution, and evolution of phylogenetic lineages. <i>Mycorrhiza</i> 20: 217–263.</li>
+    <li id="ref-heijden">van der Heijden M.G.A., Bardgett R.D., van Straalen N.M. 2008. The unseen majority: soil microbes as drivers of plant diversity and productivity in terrestrial ecosystems. <i>Ecology Letters</i> 11: 296–310.</li>
+    <li id="ref-linde">van der Linde S., Suz L.M., Orme C.D.L. et al. 2018. Environment and host as large-scale controls of ectomycorrhizal fungi. <i>Nature</i> 558: 243–248.</li>
+    <li id="ref-nuland">Van Nuland M.E., Averill C., Stewart J.D. et al. 2025. Global hotspots of mycorrhizal fungal richness are poorly protected. <i>Nature</i>. doi:10.1038/s41586-025-09277-4.</li>
+    <li id="ref-wohlleben">Wohlleben P. 2015. <i>Das geheime Leben der Bäume</i>. München: Ludwig. Рус. пер.: «Тайная жизнь деревьев».</li>
+  </ol>
+  <p class="colophon">Колофон: набрано шрифтами Literata, Spectral SC и Caveat; 3D — three.js; «печать» — собственный шейдер, раскладывающий кадр на три плашечные краски. Числа сверены с первоисточниками в сентябре 2026&nbsp;г. Иллюстрации схематичны, масштаб на сцене условный.</p>
+  <div class="stamp stamp--pink sheet__stamp" data-stamp><span>atlas fungorum</span><b>MYCELIUM</b><span>экз. № 0413</span></div>
+  <i class="corner" aria-hidden="true"></i>
+</section>
+
+<footer class="foot"><a href="#top">↑ к обложке</a><span>MYCELIUM · atlas fungorum subterraneus · 2026</span></footer>
+</div>
+</body>
+</html>
