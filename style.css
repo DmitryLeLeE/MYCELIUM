@@ -17,7 +17,7 @@
   --sc:"Spectral SC", "Literata", Georgia, serif;
   --hand:"Caveat", "Segoe Print", cursive;
   --noise:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .25  0 0 0 0 .2  0 0 0 0 .1  0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  --fibers:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .09' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 .3  0 0 0 0 .24  0 0 0 0 .12  0 0 0 .35 -.05'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+  --fibers:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .09' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 .3  0 0 0 0 .24  0 0 0 0 .12  0 0 0 .14 -.02'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
   --dots-pink:radial-gradient(circle, rgba(255,79,163,.55) 1.1px, transparent 1.6px);
   --dots-ink:radial-gradient(circle, rgba(28,58,42,.35) 1px, transparent 1.5px);
   color-scheme:light;
@@ -211,8 +211,6 @@ dfn{font-style:normal;font-weight:600;background:linear-gradient(transparent 62%
 .app-intro .riso{font:700 clamp(40px,9vw,72px)/1 var(--sc)}
 .sheet{position:relative;max-width:980px;margin:0 auto 90px;background:var(--paper-3);padding:44px clamp(18px,4vw,48px) 36px;
   border:1px solid var(--rule);background-image:var(--noise)}
-.sheet:nth-of-type(odd){transform:rotate(-.35deg)}
-.sheet:nth-of-type(even){transform:rotate(.3deg)}
 .sheet::after{content:"";position:absolute;inset:12px -12px -12px 12px;z-index:-1;background-image:var(--dots-pink);background-size:6px 6px;opacity:.7}
 .sheet::before{ /* пятно */
   content:"";position:absolute;width:150px;height:150px;right:8%;bottom:6%;border-radius:50%;pointer-events:none;
@@ -227,7 +225,7 @@ dfn{font-style:normal;font-weight:600;background:linear-gradient(transparent 62%
 .tape--r{right:-18px;top:-10px;transform:rotate(22deg)}
 .tape--c{left:50%;top:-14px;transform:translateX(-50%) rotate(-2deg)}
 .corner{position:absolute;right:-1px;bottom:-1px;width:44px;height:44px;background:linear-gradient(315deg, var(--paper) 50%, #d6c6a0 50%, #efe4c9 75%);box-shadow:-3px -3px 4px rgba(60,40,10,.14)}
-.sheet__stamp{position:absolute;right:26px;top:26px}
+.sheet__stamp{position:absolute;right:40px;bottom:30px}
 
 /* штампы */
 .stamp{display:inline-flex;flex-direction:column;align-items:center;gap:1px;padding:8px 14px;border:3px double currentColor;
@@ -290,7 +288,7 @@ dfn{font-style:normal;font-weight:600;background:linear-gradient(transparent 62%
 .stat p{margin:0 0 6px;font-size:16px;line-height:1.45}
 .stat .stat__n{font:700 clamp(38px,6vw,52px)/1.05 var(--sc);color:var(--green);font-variant-numeric:tabular-nums;
   text-shadow:var(--shift) calc(var(--shift) * -.7) 0 rgba(255,79,163,.6)}
-.stat .src{font-size:15px;font-style:italic}
+.stat .src{font-size:16px;font-style:italic}
 
 /* E */
 .labels{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:30px 24px;margin-top:22px}
@@ -304,7 +302,7 @@ dfn{font-style:normal;font-weight:600;background:linear-gradient(transparent 62%
 .hlabel h3{font:600 21px/1.2 var(--serif);margin:0;color:var(--ink)}
 .hlabel__ru{font:700 20px/1.2 var(--hand);color:var(--pencil);margin:0 0 8px}
 .hlabel dl{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin:0;font-size:16px;line-height:1.4}
-.hlabel dt{font:600 14px/1.6 var(--sc);letter-spacing:.06em;color:var(--blue-txt)}
+.hlabel dt{font:600 15px/1.5 var(--sc);letter-spacing:.06em;color:var(--blue-txt)}
 .hlabel dd{margin:0}
 .hlabel__note{margin:10px 0 0;font-size:21px;transform:rotate(-2deg)}
 

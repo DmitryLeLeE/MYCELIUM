@@ -694,7 +694,7 @@ function initScene() {
         vec2 wob = vec2(vn(px/(40.*uPR)), vn(px/(40.*uPR) + 11.)) - .5;
         vec2 q = px + wob*7.*uPR;
         vec3 c = sceneAt(px);
-        float D = clamp(1. - lum(c)/lum(uPaper), 0., 1.);
+        float D = clamp(1. - lum(c)/lum(uPaper), 0., 1.) * .82;
         float s = 5.5*uPR, h = 0.;
         h = max(h, hatch(q, .785, s, mix(.7, 1.7, D)*uPR) * smoothstep(.08, .16, D));
         h = max(h, hatch(q, -.785, s, 1.1*uPR) * smoothstep(.34, .42, D));
@@ -965,7 +965,7 @@ addEventListener('pointermove', (e) => {
   if (e.pointerType === 'touch' && !touchLens) return;
   setLens(e.clientX, e.clientY, !blocksLens(e.target));
 }, { passive: true });
-document.addEventListener('pointerleave', () => setLens(-999, -999, false));
+document.documentElement.addEventListener('mouseleave', () => setLens(-999, -999, false));
 addEventListener('blur', () => setLens(-999, -999, false));
 let touchLens = false;
 addEventListener('pointerdown', (e) => {

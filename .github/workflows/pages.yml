@@ -1,37 +1,35 @@
 name: Публикация на GitHub Pages
 
+# Сайт без сборки: копируем три файла в ветку gh-pages, откуда их отдаёт GitHub Pages.
 on:
   push:
     branches: [main, "claude/affectionate-euler-fhct1e"]
+    paths: [index.html, style.css, main.js, .github/workflows/pages.yml]
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  publish:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Собрать сайт (без сборки — просто копия файлов)
+      - name: Обновить ветку gh-pages
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          mkdir -p _site
+          mkdir _site
           cp index.html style.css main.js _site/
           touch _site/.nojekyll
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          cd _site
+          git init -q -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -qm "Публикация ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages
